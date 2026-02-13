@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>flipasio Calculator</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="calculator" aria-label="Retro calculator">
+        <header class="calc-top">
+          <p class="brand">FLIPASIO</p>
+          <h1 class="model">flipasio</h1>
+        </header>
+
+        <section class="lcd-wrap" aria-live="polite" aria-atomic="true">
+          <div id="lcd" class="lcd" role="status" aria-label="Calculator display"></div>
+        </section>
+
+        <section class="keys" aria-label="Calculator keys">
+          <button class="key key-util" data-action="ac" aria-label="All clear">AC</button>
+          <button class="key key-util" data-action="clear" aria-label="Clear entry">C</button>
+          <button class="key key-op" data-action="operator" data-value="/" aria-label="Divide">÷</button>
+          <button class="key key-op" data-action="operator" data-value="*" aria-label="Multiply">×</button>
+
+          <button class="key" data-action="digit" data-value="7">7</button>
+          <button class="key" data-action="digit" data-value="8">8</button>
+          <button class="key" data-action="digit" data-value="9">9</button>
+          <button class="key key-op" data-action="operator" data-value="-" aria-label="Subtract">−</button>
+
+          <button class="key" data-action="digit" data-value="4">4</button>
+          <button class="key" data-action="digit" data-value="5">5</button>
+          <button class="key" data-action="digit" data-value="6">6</button>
+          <button class="key key-op" data-action="operator" data-value="+" aria-label="Add">+</button>
+
+          <button class="key" data-action="digit" data-value="1">1</button>
+          <button class="key" data-action="digit" data-value="2">2</button>
+          <button class="key" data-action="digit" data-value="3">3</button>
+          <button class="key key-op key-equals" data-action="equals" aria-label="Equals">=</button>
+
+          <button class="key key-zero" data-action="digit" data-value="0">0</button>
+          <button class="key" data-action="decimal" aria-label="Decimal point">.</button>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
