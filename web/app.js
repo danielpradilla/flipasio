@@ -1,5 +1,11 @@
 const lcdEl = document.getElementById("lcd");
 const keysEl = document.querySelector(".keys");
+const calcEl = document.querySelector(".calculator");
+const flipToggleEl = document.getElementById("flip-toggle");
+const translatorRowEl = document.getElementById("translator-row");
+const translatorStatusEl = document.getElementById("translator-status");
+const wordInputEl = document.getElementById("word-input");
+const translateBtnEl = document.getElementById("translate-btn");
 const keyButtons = [...document.querySelectorAll(".key")];
 
 const MAX_CHARS = 10;
@@ -23,6 +29,21 @@ const CHAR_SEGMENTS = {
   " ": [],
 };
 
+const LETTER_TO_DIGIT_STRICT = {
+  A: "4",
+  B: "8",
+  E: "3",
+  G: "6",
+  H: "4",
+  I: "1",
+  L: "7",
+  O: "0",
+  Q: "0",
+  S: "5",
+  T: "7",
+  Z: "2",
+};
+
 const state = {
   display: "0",
   currentInput: "0",
@@ -30,6 +51,7 @@ const state = {
   pendingOperator: null,
   freshInput: true,
   error: false,
+  flipped: false,
 };
 
 function resetState() {
@@ -57,11 +79,15 @@ function allClear() {
 
 function formatNumber(num) {
   if (!Number.isFinite(num)) return "Err";
-  const rounded = Number.parseFloat(num.toFixed(9));
-  let asText = String(rounded);
+
+  const rounded = Number.parseFloat(num.toFixed(10));
+
+  // Prefer fixed-point output so division results stay readable on the LCD.
+  let asText = rounded.toFixed(8).replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1");
 
   if (asText.length > MAX_CHARS) {
-    asText = rounded.toExponential(4);
+    // Fallback to scientific notation if the value still doesn't fit.
+    asText = rounded.toExponential(4).replace("e", "E").replace("E+", "E");
   }
 
   if (asText.length > MAX_CHARS) {
@@ -88,6 +114,14 @@ function commitError() {
   state.error = true;
 }
 
+function normalizeOperator(operator) {
+  if (operator === "×" || operator === "x" || operator === "X") return "*";
+  if (operator === "÷") return "/";
+  if (operator === "−") return "-";
+  if (["+", "-", "*", "/"].includes(operator)) return operator;
+  return null;
+}
+
 function applyOperation(left, operator, right) {
   if (operator === "+") return left + right;
   if (operator === "-") return left - right;
@@ -98,6 +132,19 @@ function applyOperation(left, operator, right) {
   }
 
   return right;
+}
+
+function toggleFlip() {
+  state.flipped = !state.flipped;
+  calcEl.classList.toggle("is-flipped", state.flipped);
+  flipToggleEl.setAttribute("aria-pressed", String(state.flipped));
+  translatorRowEl.setAttribute("aria-hidden", String(!state.flipped));
+
+  if (!state.flipped) {
+    translatorStatusEl.textContent = "";
+  } else {
+    wordInputEl.focus();
+  }
 }
 
 function setDisplayFromCurrent() {
@@ -135,6 +182,9 @@ function inputDecimal() {
 function chooseOperator(operator) {
   if (state.error) return;
 
+  const normalizedOperator = normalizeOperator(operator);
+  if (!normalizedOperator) return;
+
   const currentValue = Number(state.currentInput);
 
   if (state.pendingOperator && !state.freshInput) {
@@ -155,7 +205,7 @@ function chooseOperator(operator) {
     state.accumulator = currentValue;
   }
 
-  state.pendingOperator = operator;
+  state.pendingOperator = normalizedOperator;
   state.freshInput = true;
 }
 
@@ -180,6 +230,63 @@ function evaluate() {
   state.accumulator = result;
   state.pendingOperator = null;
   state.freshInput = true;
+}
+
+function applyTranslatedNumber(numberText) {
+  state.currentInput = numberText;
+  state.display = normalizeDisplayText(numberText);
+  state.accumulator = null;
+  state.pendingOperator = null;
+  state.freshInput = true;
+  state.error = false;
+  renderDisplay();
+}
+
+function translateWordStrict() {
+  const rawWord = wordInputEl.value.trim().toUpperCase();
+
+  if (!rawWord) {
+    translatorStatusEl.textContent = "Type a word first.";
+    return;
+  }
+
+  if (!/^[A-Z]+$/.test(rawWord)) {
+    translatorStatusEl.textContent = "Strict mode: letters A-Z only.";
+    return;
+  }
+
+  const unmapped = [];
+  const mappedDigits = [];
+
+  for (const letter of rawWord) {
+    const digit = LETTER_TO_DIGIT_STRICT[letter];
+    if (!digit) {
+      unmapped.push(letter);
+    } else {
+      mappedDigits.push(digit);
+    }
+  }
+
+  if (unmapped.length > 0) {
+    translatorStatusEl.textContent = `Strict mode: cannot map ${[...new Set(unmapped)].join(", ")}.`;
+    return;
+  }
+
+  // Reverse so upside-down reading matches the typed word.
+  let translated = mappedDigits.reverse().join("");
+
+  // Preserve leading zero words (e.g. HELLO -> 0.7734 instead of 07734).
+  if (translated.length > 1 && translated.startsWith("0")) {
+    translated = `0.${translated.slice(1)}`;
+  }
+
+  if (translated.length > MAX_CHARS) {
+    translatorStatusEl.textContent = `Too long for display (${MAX_CHARS} max).`;
+    return;
+  }
+
+  applyTranslatedNumber(translated);
+  translatorStatusEl.textContent = `${rawWord} -> ${translated}`;
 }
 
 function renderCharacter(char, withDot = false) {
@@ -259,7 +366,26 @@ keysEl.addEventListener("click", (event) => {
   runAction(action, value);
 });
 
+flipToggleEl.addEventListener("click", () => {
+  toggleFlip();
+});
+
+translateBtnEl.addEventListener("click", () => {
+  translateWordStrict();
+});
+
+wordInputEl.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    translateWordStrict();
+  }
+});
+
 window.addEventListener("keydown", (event) => {
+  const target = event.target;
+  if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+    return;
+  }
   if (event.key >= "0" && event.key <= "9") {
     runAction("digit", event.key);
     activateButton("digit", event.key);
@@ -272,9 +398,12 @@ window.addEventListener("keydown", (event) => {
     return;
   }
 
-  if (["+", "-", "*", "/"].includes(event.key)) {
-    runAction("operator", event.key);
-    activateButton("operator", event.key);
+  if (["+", "-", "*", "/", "x", "X", "×", "÷", "−"].includes(event.key)) {
+    const normalizedOperator = normalizeOperator(event.key);
+    if (!normalizedOperator) return;
+
+    runAction("operator", normalizedOperator);
+    activateButton("operator", normalizedOperator);
     return;
   }
 
@@ -294,6 +423,12 @@ window.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     runAction("ac");
     activateButton("ac");
+    return;
+  }
+
+  if (event.key.toLowerCase() === "f") {
+    event.preventDefault();
+    toggleFlip();
   }
 });
 

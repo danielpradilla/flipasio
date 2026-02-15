@@ -11,12 +11,21 @@
       <section class="calculator" aria-label="Retro calculator">
         <header class="calc-top">
           <p class="brand">FLIPASIO</p>
-          <h1 class="model">flipasio</h1>
+          <h1 class="model">5318008</h1>
         </header>
 
         <section class="lcd-wrap" aria-live="polite" aria-atomic="true">
           <div id="lcd" class="lcd" role="status" aria-label="Calculator display"></div>
         </section>
+
+        <div class="control-row">
+          <button id="flip-toggle" class="flip-toggle" type="button" aria-pressed="false" aria-label="Flip calculator">FLIP</button>
+          <div id="translator-row" class="translator-row" aria-hidden="true">
+            <input id="word-input" class="word-input" type="text" maxlength="10" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="WORD" aria-label="Word to translate" />
+            <button id="translate-btn" class="translate-btn" type="button" aria-label="Translate word to number">Translate</button>
+          </div>
+        </div>
+        <p id="translator-status" class="translator-status" role="status" aria-live="polite"></p>
 
         <section class="keys" aria-label="Calculator keys">
           <button class="key key-util" data-action="ac" aria-label="All clear">AC</button>
