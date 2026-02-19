@@ -102,6 +102,22 @@ const state = {
   wordPool: [...WORD_LIST_FALLBACK],
 };
 
+function setFlipUI(isFlipped) {
+  calcEl.classList.toggle("is-flipped", isFlipped);
+  flipToggleEl.setAttribute("aria-pressed", String(isFlipped));
+  translatorRowEl.setAttribute("aria-hidden", String(!isFlipped));
+  uprightToolsEl.setAttribute("aria-hidden", String(isFlipped));
+}
+
+function setChallengeUI(isOpen) {
+  challengeTapeEl.hidden = !isOpen;
+  wordListToggleEl.setAttribute("aria-expanded", String(isOpen));
+}
+
+function setTranslatorStatus(message) {
+  translatorStatusEl.textContent = message;
+}
+
 function resetState() {
   state.calc = CalculatorEngine.createState();
 }
@@ -116,16 +132,13 @@ function allClear() {
 
 function toggleFlip() {
   state.flipped = !state.flipped;
-  calcEl.classList.toggle("is-flipped", state.flipped);
-  flipToggleEl.setAttribute("aria-pressed", String(state.flipped));
-  translatorRowEl.setAttribute("aria-hidden", String(!state.flipped));
-  uprightToolsEl.setAttribute("aria-hidden", String(state.flipped));
+  setFlipUI(state.flipped);
   if (state.flipped) {
     setChallengeOpen(false);
   }
 
   if (!state.flipped) {
-    translatorStatusEl.textContent = "";
+    setTranslatorStatus("");
   } else {
     wordInputEl.focus();
   }
@@ -197,8 +210,7 @@ function renderChallengeWords() {
 
 function setChallengeOpen(nextOpen) {
   state.challengeOpen = nextOpen;
-  challengeTapeEl.hidden = !nextOpen;
-  wordListToggleEl.setAttribute("aria-expanded", String(nextOpen));
+  setChallengeUI(nextOpen);
 }
 
 function toggleChallengeTape() {
@@ -231,12 +243,12 @@ function translateWordStrict() {
   const rawWord = wordInputEl.value.trim().toUpperCase();
 
   if (!rawWord) {
-    translatorStatusEl.textContent = "Type a word first.";
+    setTranslatorStatus("Type a word first.");
     return;
   }
 
   if (!/^[A-Z]+$/.test(rawWord)) {
-    translatorStatusEl.textContent = "Strict mode: letters A-Z only.";
+    setTranslatorStatus("Strict mode: letters A-Z only.");
     return;
   }
 
@@ -244,15 +256,15 @@ function translateWordStrict() {
   if (translated === null) {
     const unmapped = collectUnmappedStrictLetters(rawWord);
     if (unmapped.length > 0) {
-      translatorStatusEl.textContent = `Strict mode: cannot map ${unmapped.join(", ")}.`;
+      setTranslatorStatus(`Strict mode: cannot map ${unmapped.join(", ")}.`);
       return;
     }
-    translatorStatusEl.textContent = `Too long for display (${MAX_CHARS} max).`;
+    setTranslatorStatus(`Too long for display (${MAX_CHARS} max).`);
     return;
   }
 
   applyTranslatedNumber(translated);
-  translatorStatusEl.textContent = `${rawWord} -> ${translated}`;
+  setTranslatorStatus(`${rawWord} -> ${translated}`);
 }
 
 function renderCharacter(char, withDot = false) {
