@@ -100,6 +100,7 @@ const state = {
   flipped: false,
   challengeOpen: false,
   wordPool: [...WORD_LIST_FALLBACK],
+  validWordPool: [],
 };
 
 function setFlipUI(isFlipped) {
@@ -192,6 +193,10 @@ function collectUnmappedStrictLetters(word) {
   return [...unmapped];
 }
 
+function rebuildValidWordPool() {
+  state.validWordPool = state.wordPool.filter((word) => wordToCalculatorNumberStrict(word));
+}
+
 function pickRandomWords(words, count) {
   const shuffled = [...words];
   for (let i = shuffled.length - 1; i > 0; i -= 1) {
@@ -202,8 +207,8 @@ function pickRandomWords(words, count) {
 }
 
 function renderChallengeWords() {
-  const validPool = state.wordPool.filter((word) => wordToCalculatorNumberStrict(word));
-  const selected = pickRandomWords(validPool, 10);
+  const sourcePool = state.validWordPool.length > 0 ? state.validWordPool : state.wordPool;
+  const selected = pickRandomWords(sourcePool, 10);
   const rows = selected.map((word, index) => `<p class="challenge-line" role="listitem">${index + 1}. ${word}</p>`);
   challengeItemsEl.innerHTML = rows.join("");
 }
@@ -233,6 +238,7 @@ async function loadWordPool() {
       .filter((line) => /^[A-Z]+$/.test(line));
     if (words.length >= 10) {
       state.wordPool = [...new Set(words)];
+      rebuildValidWordPool();
     }
   } catch (_err) {
     // Keep fallback words when local file loading is unavailable.
@@ -409,5 +415,6 @@ window.addEventListener("keydown", (event) => {
 });
 
 resetState();
+rebuildValidWordPool();
 loadWordPool();
 renderDisplay();
