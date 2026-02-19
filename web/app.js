@@ -2,10 +2,15 @@ const lcdEl = document.getElementById("lcd");
 const keysEl = document.querySelector(".keys");
 const calcEl = document.querySelector(".calculator");
 const flipToggleEl = document.getElementById("flip-toggle");
+const uprightToolsEl = document.getElementById("upright-tools");
 const translatorRowEl = document.getElementById("translator-row");
 const translatorStatusEl = document.getElementById("translator-status");
 const wordInputEl = document.getElementById("word-input");
 const translateBtnEl = document.getElementById("translate-btn");
+const wordListToggleEl = document.getElementById("wordlist-toggle");
+const challengeTapeEl = document.getElementById("challenge-tape");
+const challengeItemsEl = document.getElementById("challenge-items");
+const challengeCloseEl = document.getElementById("challenge-close");
 const keyButtons = [...document.querySelectorAll(".key")];
 
 const MAX_CHARS = 10;
@@ -44,6 +49,44 @@ const LETTER_TO_DIGIT_STRICT = {
   Z: "2",
 };
 
+const WORD_LIST_FALLBACK = [
+  "BEE",
+  "BELL",
+  "BELLE",
+  "BELIES",
+  "BELIE",
+  "BIBLE",
+  "BIBLES",
+  "BOOBIES",
+  "BOOBS",
+  "BOB",
+  "BOGGLE",
+  "BOGLE",
+  "BOSS",
+  "BOSSIE",
+  "EEL",
+  "EELS",
+  "EGG",
+  "GIG",
+  "GIGGLE",
+  "GIGGLES",
+  "GOOGLE",
+  "HELLO",
+  "HELL",
+  "BESIEGE",
+  "HILL",
+  "HILLS",
+  "ISLE",
+  "LESS",
+  "LIES",
+  "LOL",
+  "SILO",
+  "SOLEIL",
+  "LOGO",
+  "BILL",
+  "BILLS",
+];
+
 const state = {
   display: "0",
   currentInput: "0",
@@ -52,6 +95,8 @@ const state = {
   freshInput: true,
   error: false,
   flipped: false,
+  challengeOpen: false,
+  wordPool: [...WORD_LIST_FALLBACK],
 };
 
 function resetState() {
@@ -139,6 +184,10 @@ function toggleFlip() {
   calcEl.classList.toggle("is-flipped", state.flipped);
   flipToggleEl.setAttribute("aria-pressed", String(state.flipped));
   translatorRowEl.setAttribute("aria-hidden", String(!state.flipped));
+  uprightToolsEl.setAttribute("aria-hidden", String(state.flipped));
+  if (state.flipped) {
+    setChallengeOpen(false);
+  }
 
   if (!state.flipped) {
     translatorStatusEl.textContent = "";
@@ -240,6 +289,71 @@ function applyTranslatedNumber(numberText) {
   state.freshInput = true;
   state.error = false;
   renderDisplay();
+}
+
+function wordToCalculatorNumberStrict(word) {
+  const mappedDigits = [];
+
+  for (const letter of word) {
+    const digit = LETTER_TO_DIGIT_STRICT[letter];
+    if (!digit) return null;
+    mappedDigits.push(digit);
+  }
+
+  let translated = mappedDigits.reverse().join("");
+  if (translated.length > 1 && translated.startsWith("0")) {
+    translated = `0.${translated.slice(1)}`;
+  }
+  if (translated.length > MAX_CHARS) return null;
+  return translated;
+}
+
+function pickRandomWords(words, count) {
+  const shuffled = [...words];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+}
+
+function renderChallengeWords() {
+  const validPool = state.wordPool.filter((word) => wordToCalculatorNumberStrict(word));
+  const selected = pickRandomWords(validPool, 10);
+  const rows = selected.map((word, index) => `<p class="challenge-line" role="listitem">${index + 1}. ${word}</p>`);
+  challengeItemsEl.innerHTML = rows.join("");
+}
+
+function setChallengeOpen(nextOpen) {
+  state.challengeOpen = nextOpen;
+  challengeTapeEl.hidden = !nextOpen;
+  wordListToggleEl.setAttribute("aria-expanded", String(nextOpen));
+}
+
+function toggleChallengeTape() {
+  if (state.flipped) return;
+  const nextOpen = !state.challengeOpen;
+  setChallengeOpen(nextOpen);
+  if (nextOpen) {
+    renderChallengeWords();
+  }
+}
+
+async function loadWordPool() {
+  try {
+    const response = await fetch("../data/calculator_words.txt", { cache: "no-store" });
+    if (!response.ok) return;
+    const text = await response.text();
+    const words = text
+      .split(/\r?\n/)
+      .map((line) => line.trim().toUpperCase())
+      .filter((line) => /^[A-Z]+$/.test(line));
+    if (words.length >= 10) {
+      state.wordPool = [...new Set(words)];
+    }
+  } catch (_err) {
+    // Keep fallback words when local file loading is unavailable.
+  }
 }
 
 function translateWordStrict() {
@@ -370,6 +484,14 @@ flipToggleEl.addEventListener("click", () => {
   toggleFlip();
 });
 
+wordListToggleEl.addEventListener("click", () => {
+  toggleChallengeTape();
+});
+
+challengeCloseEl.addEventListener("click", () => {
+  setChallengeOpen(false);
+});
+
 translateBtnEl.addEventListener("click", () => {
   translateWordStrict();
 });
@@ -429,8 +551,15 @@ window.addEventListener("keydown", (event) => {
   if (event.key.toLowerCase() === "f") {
     event.preventDefault();
     toggleFlip();
+    return;
+  }
+
+  if (event.key.toLowerCase() === "w" && !state.flipped) {
+    event.preventDefault();
+    toggleChallengeTape();
   }
 });
 
 resetState();
+loadWordPool();
 renderDisplay();

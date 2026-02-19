@@ -49,6 +49,13 @@ body {
   padding: 1rem;
 }
 
+.calc-stage {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
 .calculator {
   position: relative;
   width: min(100%, 380px);
@@ -239,6 +246,12 @@ body {
   align-items: center;
 }
 
+.upright-tools {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+}
+
 .word-input {
   width: 100%;
   border: 1px solid #8e908c;
@@ -297,8 +310,82 @@ body {
   display: flex;
 }
 
+.calculator.is-flipped .upright-tools {
+  display: none;
+}
+
 .calculator.is-flipped .translator-status {
   display: block;
+}
+
+.challenge-tape {
+  width: 178px;
+  min-height: 92%;
+  align-self: center;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(31, 39, 44, 0.11) 1px, transparent 1px) 0 0 / 4px 4px,
+    linear-gradient(180deg, #f8f5e9 0%, #ece5d2 100%);
+  border: 1px solid #b6ab8e;
+  border-radius: 0.3rem;
+  padding: 0.52rem 0.5rem 0.56rem;
+  box-shadow:
+    0 8px 14px rgba(39, 31, 18, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.challenge-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.challenge-title {
+  margin: 0;
+  font-family: "Courier New", "Lucida Console", monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #313238;
+}
+
+.challenge-close {
+  border: 1px solid #5f6468;
+  border-radius: 0.2rem;
+  background: #e3ddd0;
+  color: #3e4247;
+  font-family: "Courier New", "Lucida Console", monospace;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.15rem 0.25rem;
+  cursor: pointer;
+}
+
+.challenge-close:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.challenge-subtitle {
+  margin: 0.2rem 0 0.4rem;
+  font-family: "Courier New", "Lucida Console", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: #555a5f;
+}
+
+.challenge-items {
+  font-family: "Courier New", "Lucida Console", monospace;
+  font-size: 0.79rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.45;
+  color: #22272b;
+}
+
+.challenge-line {
+  margin: 0 0 0.24rem;
 }
 
 .keys {
@@ -396,6 +483,21 @@ body {
   height: 100%;
 }
 
+@media (max-width: 860px) {
+  .calc-stage {
+    align-items: center;
+  }
+
+  .challenge-tape {
+    width: min(230px, calc(100vw - 2rem));
+    min-height: auto;
+    position: absolute;
+    top: 0.55rem;
+    right: 0.45rem;
+    z-index: 12;
+  }
+}
+
 @media (max-width: 380px) {
   .calculator {
     width: min(100%, 355px);
@@ -412,5 +514,10 @@ body {
   .word-input {
     font-size: 0.8rem;
     min-width: 0;
+  }
+
+  .challenge-tape {
+    width: min(210px, calc(100vw - 1.25rem));
+    right: 0.2rem;
   }
 }

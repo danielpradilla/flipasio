@@ -8,50 +8,73 @@
   </head>
   <body>
     <main class="page">
-      <section class="calculator" aria-label="Retro calculator">
-        <header class="calc-top">
-          <p class="brand">FLIPASIO</p>
-          <h1 class="model">5318008</h1>
-        </header>
+      <div class="calc-stage">
+        <section class="calculator" aria-label="Retro calculator">
+          <header class="calc-top">
+            <p class="brand">FLIPASIO</p>
+            <h1 class="model">5318008</h1>
+          </header>
 
-        <section class="lcd-wrap" aria-live="polite" aria-atomic="true">
-          <div id="lcd" class="lcd" role="status" aria-label="Calculator display"></div>
-        </section>
+          <section class="lcd-wrap" aria-live="polite" aria-atomic="true">
+            <div id="lcd" class="lcd" role="status" aria-label="Calculator display"></div>
+          </section>
 
-        <div class="control-row">
-          <button id="flip-toggle" class="flip-toggle" type="button" aria-pressed="false" aria-label="Flip calculator">FLIP</button>
-          <div id="translator-row" class="translator-row" aria-hidden="true">
-            <input id="word-input" class="word-input" type="text" maxlength="10" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="WORD" aria-label="Word to translate" />
-            <button id="translate-btn" class="translate-btn" type="button" aria-label="Translate word to number">Translate</button>
+          <div class="control-row">
+            <button id="flip-toggle" class="flip-toggle" type="button" aria-pressed="false" aria-label="Flip calculator">FLIP</button>
+            <div id="upright-tools" class="upright-tools">
+              <button
+                id="wordlist-toggle"
+                class="translate-btn"
+                type="button"
+                aria-expanded="false"
+                aria-controls="challenge-tape"
+                aria-label="Show calculator word challenges"
+              >
+                Word List
+              </button>
+            </div>
+            <div id="translator-row" class="translator-row" aria-hidden="true">
+              <input id="word-input" class="word-input" type="text" maxlength="10" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="WORD" aria-label="Word to translate" />
+              <button id="translate-btn" class="translate-btn" type="button" aria-label="Translate word to number">Translate</button>
+            </div>
           </div>
-        </div>
-        <p id="translator-status" class="translator-status" role="status" aria-live="polite"></p>
+          <p id="translator-status" class="translator-status" role="status" aria-live="polite"></p>
 
-        <section class="keys" aria-label="Calculator keys">
-          <button class="key key-util" data-action="ac" aria-label="All clear">AC</button>
-          <button class="key key-util" data-action="clear" aria-label="Clear entry">C</button>
-          <button class="key key-op" data-action="operator" data-value="/" aria-label="Divide">÷</button>
-          <button class="key key-op" data-action="operator" data-value="*" aria-label="Multiply">×</button>
+          <section class="keys" aria-label="Calculator keys">
+            <button class="key key-util" data-action="ac" aria-label="All clear">AC</button>
+            <button class="key key-util" data-action="clear" aria-label="Clear entry">C</button>
+            <button class="key key-op" data-action="operator" data-value="/" aria-label="Divide">÷</button>
+            <button class="key key-op" data-action="operator" data-value="*" aria-label="Multiply">×</button>
 
-          <button class="key" data-action="digit" data-value="7">7</button>
-          <button class="key" data-action="digit" data-value="8">8</button>
-          <button class="key" data-action="digit" data-value="9">9</button>
-          <button class="key key-op" data-action="operator" data-value="-" aria-label="Subtract">−</button>
+            <button class="key" data-action="digit" data-value="7">7</button>
+            <button class="key" data-action="digit" data-value="8">8</button>
+            <button class="key" data-action="digit" data-value="9">9</button>
+            <button class="key key-op" data-action="operator" data-value="-" aria-label="Subtract">−</button>
 
-          <button class="key" data-action="digit" data-value="4">4</button>
-          <button class="key" data-action="digit" data-value="5">5</button>
-          <button class="key" data-action="digit" data-value="6">6</button>
-          <button class="key key-op" data-action="operator" data-value="+" aria-label="Add">+</button>
+            <button class="key" data-action="digit" data-value="4">4</button>
+            <button class="key" data-action="digit" data-value="5">5</button>
+            <button class="key" data-action="digit" data-value="6">6</button>
+            <button class="key key-op" data-action="operator" data-value="+" aria-label="Add">+</button>
 
-          <button class="key" data-action="digit" data-value="1">1</button>
-          <button class="key" data-action="digit" data-value="2">2</button>
-          <button class="key" data-action="digit" data-value="3">3</button>
-          <button class="key key-op key-equals" data-action="equals" aria-label="Equals">=</button>
+            <button class="key" data-action="digit" data-value="1">1</button>
+            <button class="key" data-action="digit" data-value="2">2</button>
+            <button class="key" data-action="digit" data-value="3">3</button>
+            <button class="key key-op key-equals" data-action="equals" aria-label="Equals">=</button>
 
-          <button class="key key-zero" data-action="digit" data-value="0">0</button>
-          <button class="key" data-action="decimal" aria-label="Decimal point">.</button>
+            <button class="key key-zero" data-action="digit" data-value="0">0</button>
+            <button class="key" data-action="decimal" aria-label="Decimal point">.</button>
+          </section>
         </section>
-      </section>
+
+        <aside id="challenge-tape" class="challenge-tape" aria-label="Word challenge tape" hidden>
+          <div class="challenge-head">
+            <p class="challenge-title">WORD CHALLENGE</p>
+            <button id="challenge-close" class="challenge-close" type="button" aria-label="Hide word challenge">X</button>
+          </div>
+          <p class="challenge-subtitle">10 random words</p>
+          <div id="challenge-items" class="challenge-items" role="list"></div>
+        </aside>
+      </div>
     </main>
 
     <script src="app.js"></script>
