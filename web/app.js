@@ -15,6 +15,14 @@ const keyButtons = [...document.querySelectorAll(".key")];
 
 const MAX_CHARS = CalculatorEngine.MAX_CHARS;
 const SEGMENTS = ["a", "b", "c", "d", "e", "f", "g"];
+const OPERATOR_KEYS = new Set(["+", "-", "*", "/", "x", "X", "×", "÷", "−"]);
+const KEY_TO_ACTION = {
+  ".": { action: "decimal" },
+  Enter: { action: "equals", preventDefault: true },
+  "=": { action: "equals", preventDefault: true },
+  Backspace: { action: "clear" },
+  Escape: { action: "ac" },
+};
 
 const CHAR_SEGMENTS = {
   "0": ["a", "b", "c", "d", "e", "f"],
@@ -297,20 +305,19 @@ function activateButton(action, value) {
   window.setTimeout(() => button.classList.remove("is-active"), 110);
 }
 
+const ACTION_HANDLERS = {
+  digit: (value) => inputDigit(value),
+  decimal: () => inputDecimal(),
+  operator: (value) => chooseOperator(value),
+  equals: () => evaluate(),
+  clear: () => clearEntry(),
+  ac: () => allClear(),
+};
+
 function runAction(action, value = "") {
-  if (action === "digit") {
-    inputDigit(value);
-  } else if (action === "decimal") {
-    inputDecimal();
-  } else if (action === "operator") {
-    chooseOperator(value);
-  } else if (action === "equals") {
-    evaluate();
-  } else if (action === "clear") {
-    clearEntry();
-  } else if (action === "ac") {
-    allClear();
-  }
+  const handler = ACTION_HANDLERS[action];
+  if (!handler) return;
+  handler(value);
 
   renderDisplay();
 }
@@ -358,13 +365,7 @@ window.addEventListener("keydown", (event) => {
     return;
   }
 
-  if (event.key === ".") {
-    runAction("decimal");
-    activateButton("decimal");
-    return;
-  }
-
-  if (["+", "-", "*", "/", "x", "X", "×", "÷", "−"].includes(event.key)) {
+  if (OPERATOR_KEYS.has(event.key)) {
     const normalizedOperator = CalculatorEngine.normalizeOperator(event.key);
     if (!normalizedOperator) return;
 
@@ -373,22 +374,13 @@ window.addEventListener("keydown", (event) => {
     return;
   }
 
-  if (event.key === "Enter" || event.key === "=") {
-    event.preventDefault();
-    runAction("equals");
-    activateButton("equals");
-    return;
-  }
-
-  if (event.key === "Backspace") {
-    runAction("clear");
-    activateButton("clear");
-    return;
-  }
-
-  if (event.key === "Escape") {
-    runAction("ac");
-    activateButton("ac");
+  const mappedShortcut = KEY_TO_ACTION[event.key];
+  if (mappedShortcut) {
+    if (mappedShortcut.preventDefault) {
+      event.preventDefault();
+    }
+    runAction(mappedShortcut.action);
+    activateButton(mappedShortcut.action);
     return;
   }
 
