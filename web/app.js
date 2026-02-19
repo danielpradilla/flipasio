@@ -161,6 +161,16 @@ function wordToCalculatorNumberStrict(word) {
   return translated;
 }
 
+function collectUnmappedStrictLetters(word) {
+  const unmapped = new Set();
+  for (const letter of word) {
+    if (!LETTER_TO_DIGIT_STRICT[letter]) {
+      unmapped.add(letter);
+    }
+  }
+  return [...unmapped];
+}
+
 function pickRandomWords(words, count) {
   const shuffled = [...words];
   for (let i = shuffled.length - 1; i > 0; i -= 1) {
@@ -222,32 +232,13 @@ function translateWordStrict() {
     return;
   }
 
-  const unmapped = [];
-  const mappedDigits = [];
-
-  for (const letter of rawWord) {
-    const digit = LETTER_TO_DIGIT_STRICT[letter];
-    if (!digit) {
-      unmapped.push(letter);
-    } else {
-      mappedDigits.push(digit);
+  const translated = wordToCalculatorNumberStrict(rawWord);
+  if (translated === null) {
+    const unmapped = collectUnmappedStrictLetters(rawWord);
+    if (unmapped.length > 0) {
+      translatorStatusEl.textContent = `Strict mode: cannot map ${unmapped.join(", ")}.`;
+      return;
     }
-  }
-
-  if (unmapped.length > 0) {
-    translatorStatusEl.textContent = `Strict mode: cannot map ${[...new Set(unmapped)].join(", ")}.`;
-    return;
-  }
-
-  // Reverse so upside-down reading matches the typed word.
-  let translated = mappedDigits.reverse().join("");
-
-  // Preserve leading zero words (e.g. HELLO -> 0.7734 instead of 07734).
-  if (translated.length > 1 && translated.startsWith("0")) {
-    translated = `0.${translated.slice(1)}`;
-  }
-
-  if (translated.length > MAX_CHARS) {
     translatorStatusEl.textContent = `Too long for display (${MAX_CHARS} max).`;
     return;
   }
