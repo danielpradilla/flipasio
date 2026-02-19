@@ -13,7 +13,7 @@ const challengeItemsEl = document.getElementById("challenge-items");
 const challengeCloseEl = document.getElementById("challenge-close");
 const keyButtons = [...document.querySelectorAll(".key")];
 
-const MAX_CHARS = 10;
+const MAX_CHARS = CalculatorEngine.MAX_CHARS;
 const SEGMENTS = ["a", "b", "c", "d", "e", "f", "g"];
 
 const CHAR_SEGMENTS = {
@@ -28,9 +28,9 @@ const CHAR_SEGMENTS = {
   "8": ["a", "b", "c", "d", "e", "f", "g"],
   "9": ["a", "b", "c", "d", "f", "g"],
   "-": ["g"],
-  "E": ["a", "d", "e", "f", "g"],
-  "r": ["e", "g"],
-  "o": ["c", "d", "e", "g"],
+  E: ["a", "d", "e", "f", "g"],
+  r: ["e", "g"],
+  o: ["c", "d", "e", "g"],
   " ": [],
 };
 
@@ -88,95 +88,22 @@ const WORD_LIST_FALLBACK = [
 ];
 
 const state = {
-  display: "0",
-  currentInput: "0",
-  accumulator: null,
-  pendingOperator: null,
-  freshInput: true,
-  error: false,
+  calc: CalculatorEngine.createState(),
   flipped: false,
   challengeOpen: false,
   wordPool: [...WORD_LIST_FALLBACK],
 };
 
 function resetState() {
-  state.display = "0";
-  state.currentInput = "0";
-  state.accumulator = null;
-  state.pendingOperator = null;
-  state.freshInput = true;
-  state.error = false;
+  state.calc = CalculatorEngine.createState();
 }
 
 function clearEntry() {
-  if (state.error) {
-    resetState();
-  } else {
-    state.currentInput = "0";
-    state.display = "0";
-    state.freshInput = true;
-  }
+  state.calc = CalculatorEngine.clearEntry(state.calc);
 }
 
 function allClear() {
-  resetState();
-}
-
-function formatNumber(num) {
-  if (!Number.isFinite(num)) return "Err";
-
-  const rounded = Number.parseFloat(num.toFixed(10));
-
-  // Prefer fixed-point output so division results stay readable on the LCD.
-  let asText = rounded.toFixed(8).replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1");
-
-  if (asText.length > MAX_CHARS) {
-    // Fallback to scientific notation if the value still doesn't fit.
-    asText = rounded.toExponential(4).replace("e", "E").replace("E+", "E");
-  }
-
-  if (asText.length > MAX_CHARS) {
-    return "Err";
-  }
-
-  return asText;
-}
-
-function normalizeDisplayText(text) {
-  if (text.length > MAX_CHARS) {
-    return "Err";
-  }
-
-  return text.padStart(MAX_CHARS, " ");
-}
-
-function commitError() {
-  state.display = "Err";
-  state.currentInput = "0";
-  state.accumulator = null;
-  state.pendingOperator = null;
-  state.freshInput = true;
-  state.error = true;
-}
-
-function normalizeOperator(operator) {
-  if (operator === "×" || operator === "x" || operator === "X") return "*";
-  if (operator === "÷") return "/";
-  if (operator === "−") return "-";
-  if (["+", "-", "*", "/"].includes(operator)) return operator;
-  return null;
-}
-
-function applyOperation(left, operator, right) {
-  if (operator === "+") return left + right;
-  if (operator === "-") return left - right;
-  if (operator === "*") return left * right;
-  if (operator === "/") {
-    if (right === 0) return null;
-    return left / right;
-  }
-
-  return right;
+  state.calc = CalculatorEngine.allClear();
 }
 
 function toggleFlip() {
@@ -196,98 +123,24 @@ function toggleFlip() {
   }
 }
 
-function setDisplayFromCurrent() {
-  state.display = normalizeDisplayText(state.currentInput);
-}
-
 function inputDigit(digit) {
-  if (state.error) resetState();
-
-  if (state.freshInput) {
-    state.currentInput = digit;
-    state.freshInput = false;
-  } else if (state.currentInput === "0") {
-    state.currentInput = digit;
-  } else if (state.currentInput.length < MAX_CHARS) {
-    state.currentInput += digit;
-  }
-
-  setDisplayFromCurrent();
+  state.calc = CalculatorEngine.inputDigit(state.calc, digit);
 }
 
 function inputDecimal() {
-  if (state.error) resetState();
-
-  if (state.freshInput) {
-    state.currentInput = "0.";
-    state.freshInput = false;
-  } else if (!state.currentInput.includes(".")) {
-    state.currentInput += ".";
-  }
-
-  setDisplayFromCurrent();
+  state.calc = CalculatorEngine.inputDecimal(state.calc);
 }
 
 function chooseOperator(operator) {
-  if (state.error) return;
-
-  const normalizedOperator = normalizeOperator(operator);
-  if (!normalizedOperator) return;
-
-  const currentValue = Number(state.currentInput);
-
-  if (state.pendingOperator && !state.freshInput) {
-    const result = applyOperation(state.accumulator, state.pendingOperator, currentValue);
-    if (result === null) {
-      commitError();
-      return;
-    }
-    state.accumulator = result;
-    const formatted = formatNumber(result);
-    if (formatted === "Err") {
-      commitError();
-      return;
-    }
-    state.currentInput = formatted;
-    state.display = normalizeDisplayText(formatted);
-  } else if (state.accumulator === null) {
-    state.accumulator = currentValue;
-  }
-
-  state.pendingOperator = normalizedOperator;
-  state.freshInput = true;
+  state.calc = CalculatorEngine.chooseOperator(state.calc, operator);
 }
 
 function evaluate() {
-  if (state.error || state.pendingOperator === null) return;
-
-  const rightValue = Number(state.currentInput);
-  const result = applyOperation(state.accumulator, state.pendingOperator, rightValue);
-  if (result === null) {
-    commitError();
-    return;
-  }
-
-  const formatted = formatNumber(result);
-  if (formatted === "Err") {
-    commitError();
-    return;
-  }
-
-  state.currentInput = formatted;
-  state.display = normalizeDisplayText(formatted);
-  state.accumulator = result;
-  state.pendingOperator = null;
-  state.freshInput = true;
+  state.calc = CalculatorEngine.evaluate(state.calc);
 }
 
 function applyTranslatedNumber(numberText) {
-  state.currentInput = numberText;
-  state.display = normalizeDisplayText(numberText);
-  state.accumulator = null;
-  state.pendingOperator = null;
-  state.freshInput = true;
-  state.error = false;
+  state.calc = CalculatorEngine.applyTranslatedNumber(state.calc, numberText);
   renderDisplay();
 }
 
@@ -427,8 +280,8 @@ function renderCharacter(char, withDot = false) {
 
 function renderDisplay() {
   lcdEl.textContent = "";
-  const raw = state.error ? "Err" : state.currentInput;
-  const text = normalizeDisplayText(raw);
+  const raw = state.calc.error ? "Err" : state.calc.currentInput;
+  const text = CalculatorEngine.normalizeDisplayText(raw);
 
   for (let i = 0; i < text.length; i += 1) {
     const char = text[i];
@@ -521,7 +374,7 @@ window.addEventListener("keydown", (event) => {
   }
 
   if (["+", "-", "*", "/", "x", "X", "×", "÷", "−"].includes(event.key)) {
-    const normalizedOperator = normalizeOperator(event.key);
+    const normalizedOperator = CalculatorEngine.normalizeOperator(event.key);
     if (!normalizedOperator) return;
 
     runAction("operator", normalizedOperator);
