@@ -102,6 +102,7 @@ const state = {
   wordPool: [...WORD_LIST_FALLBACK],
   validWordPool: [],
 };
+let lastTouchEndAt = 0;
 
 function setFlipUI(isFlipped) {
   calcEl.classList.toggle("is-flipped", isFlipped);
@@ -343,6 +344,31 @@ function runAction(action, value = "") {
   renderDisplay();
 }
 
+function installIOSZoomLock() {
+  const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+  if (!isTouchDevice) return;
+
+  document.addEventListener(
+    "gesturestart",
+    (event) => {
+      event.preventDefault();
+    },
+    { passive: false },
+  );
+
+  document.addEventListener(
+    "touchend",
+    (event) => {
+      const now = Date.now();
+      if (now - lastTouchEndAt <= 300) {
+        event.preventDefault();
+      }
+      lastTouchEndAt = now;
+    },
+    { passive: false },
+  );
+}
+
 keysEl.addEventListener("click", (event) => {
   const button = event.target.closest(".key");
   if (!button) return;
@@ -421,3 +447,4 @@ resetState();
 rebuildValidWordPool();
 loadWordPool();
 renderDisplay();
+installIOSZoomLock();
