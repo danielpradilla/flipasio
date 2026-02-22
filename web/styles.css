@@ -51,7 +51,7 @@ body {
 
 .calc-stage {
   position: relative;
-  width: min(100%, 380px);
+  width: min(100%, 352px);
 }
 
 .calculator {
@@ -501,7 +501,7 @@ body {
 
 @media (max-width: 380px) {
   .calculator {
-    width: min(100%, 355px);
+    width: min(100%, 334px);
   }
 
   .brand {
@@ -513,11 +513,21 @@ body {
   }
 
   .word-input {
-    font-size: 0.8rem;
+    font-size: 1rem;
     min-width: 0;
   }
 
   .challenge-tape {
     right: 0.2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 0.75rem;
+  }
+
+  .calc-stage {
+    width: min(100%, 330px);
   }
 }

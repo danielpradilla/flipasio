@@ -141,7 +141,10 @@ function toggleFlip() {
   if (!state.flipped) {
     setTranslatorStatus("");
   } else {
-    wordInputEl.focus();
+    const desktopLikePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (desktopLikePointer) {
+      wordInputEl.focus();
+    }
   }
 }
 
